@@ -37,7 +37,8 @@ const refreshState = (myQ) => {
         }
       } else {
         if (openDoors[device.serial_number]) {
-          // now closed, so delete
+          // now closed, so delete from the state object
+          console.info('Garage door ', device.serial_number, ' is now closed.');
           delete openDoors[device.serial_number];
         }
       }
