@@ -4,5 +4,10 @@ Monitor your myQ supported garage door (Chamberlain, Liftmaster) status and send
 
 ## Running
 ```
-docker-compose run app
+docker compose run app
+```
+
+## Developing
+```
+docker compose run dev
 ```
