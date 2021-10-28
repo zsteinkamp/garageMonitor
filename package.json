@@ -1,7 +1,7 @@
 {
-  "name": "node-tdd-base",
+  "name": "garageMonitor",
   "version": "1.0.0",
-  "description": "Fork this to get a container environment that watches the source directory for changes and runs \"npm test\" each time there is a change.",
+  "description": "Monitor your myQ garage door (Chamberlain, LiftMaster) and send a notification to you if it was open for more than N minutes.",
   "main": "src/index.js",
   "scripts": {
     "lint": "npx eslint src/",
