@@ -15,8 +15,8 @@
   "author": "Zack Steinkamp",
   "license": "ISC",
   "dependencies": {
+    "@hjdhjd/myq": "^6.0.4",
     "mocha": "^9.1.3",
-    "myq-api": "^2.0.4",
     "nodemon": "^2.0.14"
   },
   "devDependencies": {

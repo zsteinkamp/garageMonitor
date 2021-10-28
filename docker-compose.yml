@@ -2,12 +2,18 @@ services:
   dev:
     build: .
     command: "npm run watch:dev"
+    environment:
+      MYQ_USER: ${MYQ_USER}
+      MYQ_PASS: ${MYQ_PASS}
     volumes:
       - .:/app
       - /app/node_modules
   app:
     build: .
     command: "npm run start"
+    environment:
+      MYQ_USER: ${MYQ_USER}
+      MYQ_PASS: ${MYQ_PASS}
     volumes:
       - .:/app
       - /app/node_modules
