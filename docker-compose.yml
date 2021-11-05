@@ -4,6 +4,13 @@ services:
     build: .
     command: "npm run watch:dev"
     environment:
+      TERM: xterm
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_FROM: ${SMTP_FROM}
+      SMTP_TO: ${SMTP_TO}
       MYQ_USER: ${MYQ_USER}
       MYQ_PASS: ${MYQ_PASS}
     volumes:
@@ -13,6 +20,13 @@ services:
     build: .
     command: "npm run start"
     environment:
+      TERM: xterm
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_FROM: ${SMTP_FROM}
+      SMTP_TO: ${SMTP_TO}
       MYQ_USER: ${MYQ_USER}
       MYQ_PASS: ${MYQ_PASS}
     volumes:
