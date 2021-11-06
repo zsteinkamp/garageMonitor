@@ -29,6 +29,7 @@ services:
       SMTP_TO: ${SMTP_TO}
       MYQ_USER: ${MYQ_USER}
       MYQ_PASS: ${MYQ_PASS}
+    restart: always
     volumes:
       - .:/app
       - /app/node_modules

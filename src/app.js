@@ -69,7 +69,6 @@ const refreshState = (myQ) => {
         }
       }
     }
-    console.log(openDoors);
   });
 };
 
