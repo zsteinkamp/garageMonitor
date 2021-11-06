@@ -1,14 +1,23 @@
 'use strict';
 
-const MQ = require('@hjdhjd/myq').myQApi;
-const nodemailer = require('nodemailer');
+// populate environment
+require('dotenv').config();
 
+// set up Twilio
+const accountSid = process.env.TWILIO_ACC_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const twilio = require('twilio')(accountSid, authToken);
+
+// set up myQ
+const MQ = require('@hjdhjd/myq').myQApi;
+const myQ = new MQ(process.env.MYQ_USER, process.env.MYQ_PASS);
+
+// ensure we have env vars we need
 for (const reqEnv of [
-  'SMTP_USER',
-  'SMTP_PASS',
-  'SMTP_HOST',
-  'SMTP_FROM',
-  'SMTP_TO',
+  'TWILIO_ACC_SID',
+  'TWILIO_AUTH_TOKEN',
+  'TWILIO_MSG_SVC_SID',
+  'TWILIO_TO',
   'MYQ_USER',
   'MYQ_PASS'
 ]) {
@@ -18,20 +27,22 @@ for (const reqEnv of [
   }
 }
 
+// helper function to dispatch a message
+const sendMessage = (body) => {
+  twilio.messages
+    .create({
+      body: body,
+      messagingServiceSid: process.env.TWILIO_MSG_SVC_SID,
+      to: process.env.TWILIO_TO
+    })
+    .then(message => console.log(`Sent SMS <${message.sid}> :: ${body}`))
+    .done();
+};
+
+// to keep track of when doors were first noticed being open
 const openDoors = {};
 
-const myQ = new MQ(process.env.MYQ_USER, process.env.MYQ_PASS);
-
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT || 587,
-  secure: false, // true for 465, false for other ports
-  auth: {
-    user: process.env.SMTP_USER, // generated ethereal user
-    pass: process.env.SMTP_PASS // generated ethereal password
-  }
-});
-
+// main loop
 const refreshState = (myQ) => {
   myQ.refreshDevices().then(() => {
     for (const device of myQ.devices) {
@@ -46,20 +57,12 @@ const refreshState = (myQ) => {
           // not already known as open
           console.info('Garage door ', device.serial_number, ' is now open.');
           openDoors[device.serial_number] = { openAt: new Date() };
-        } else {
-          // known as open already
-          const openAgeMinutes = Math.round(((new Date()) - openDoors[device.serial_number].openAt) / 60 / 1000);
-          console.info('Garage door ', device.serial_number, ' has been open for ', openAgeMinutes, ' minutes.');
-          if (openAgeMinutes > (process.env.MYQ_MAX_OPEN_DURATION_MINUTES || 10)) {
-            transporter.sendMail({
-              from: process.env.SMTP_FROM,
-              to: process.env.SMTP_TO,
-              subject: 'Garage Alert',
-              text: 'Door is open'
-            }).then((info) => {
-              console.log('Email sent: %s', info.messageId);
-            });
-          }
+        }
+
+        const openAgeMinutes = Math.round(((new Date()) - openDoors[device.serial_number].openAt) / 60 / 1000);
+        console.info('Garage door ', device.serial_number, ' has been open for ', openAgeMinutes, ' minutes.');
+        if (openAgeMinutes && (openAgeMinutes % (process.env.MYQ_MAX_OPEN_DURATION_MINUTES || 10) === 0)) {
+          sendMessage(`Garage door has been open for ${openAgeMinutes} minutes.`);
         }
       } else {
         if (openDoors[device.serial_number]) {
@@ -72,17 +75,11 @@ const refreshState = (myQ) => {
   });
 };
 
+// hello to you too
+sendMessage('Starting up.');
+
 // initial run
 refreshState(myQ);
-
-transporter.sendMail({
-  from: process.env.SMTP_FROM,
-  to: process.env.SMTP_TO,
-  subject: 'Garage Alert',
-  text: 'Starting Up'
-}).then((info) => {
-  console.log('Email sent: %s', info.messageId);
-});
 
 // interval run
 setInterval(() => {

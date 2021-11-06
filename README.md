@@ -1,30 +1,47 @@
 # garageMonitor
 
-Monitor your myQ supported garage door (Chamberlain, Liftmaster) status and send you a notification if it was open more than N minutes.
+Monitor your myQ supported garage door (Chamberlain, Liftmaster) status and send you a notification via Twilio if it was open more than N minutes.
 
-You will need to set the following environment variables before running the commands below. You can paste the content below into a file called `.env` in the current directory if you like.
+You will need to set up a free Twilio account first. https://twilio.com/
+
+Then will need to create a `.env` file in the top-level directory that looks like this:
 
 ```
-MYQ_USER="you@yourself.com"
-MYQ_PASS="myqpassword"
-SMTP_USER="smtpuser"
-SMTP_PASS="smtppass"
-SMTP_HOST="smtp.some.server"
-SMTP_PORT=587
-SMTP_FROM="you@yourself.com"
-SMTP_TO="you@yourself.com"
+MYQ_USER=you@yourself.com
+MYQ_PASS=myqpassword
+
+TWILIO_ACC_SID=...twilio account sid...
+TWILIO_AUTH_TOKEN=...twilio auth token...
+TWILIO_MSG_SVC_SID=...twilio message service id...
+TWILIO_TO=+14085551212
+```
+## Polling Interval
+
+By default, this code checks the status of your garage door every minute. You can change that by setting the following variable in `.env`.
+
+```
+MYQ_POLLING_INTERVAL_MINUTES=2
 ```
 
-You may want to use your text messaging email address for the `SMTP_TO`
-variable. Poor man's push notifications. For example, if you are with AT&T,
-then your text message email address is `{yourphonenumber}@txt.att.net`.
+## Time Sensitivity
+To control how long the garage needs to be open before you are notified, set the following environment variable. The default is 10 minutes.
 
-## Running
 ```
-docker compose run app
+MYQ_MAX_OPEN_DURATION_MINUTES=10
 ```
 
-## Developing
+## Running the App
+
+The app runs in a Docker container. It is set to restart if it crashes or when Docker starts up. Run this command to start it:
+
 ```
-docker compose run dev
+docker compose up --build app
+```
+
+## Development Mode
+
+In Development Mode, the app is run in a container with the source directory mounted inside. It is reloaded any time you change a source file.
+
+```
+docker compose up --build dev
 ```
