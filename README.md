@@ -35,13 +35,19 @@ MYQ_MAX_OPEN_DURATION_MINUTES=10
 The app runs in a Docker container. It is set to restart if it crashes or when Docker starts up. Run this command to start it:
 
 ```
-docker compose up -d --build app
+docker-compose up -d --build app
 ```
 
 You can keep an eye on the logs from the app container with tihs command:
 
 ```
-docker compose logs -f app
+docker-compose logs -f app
+```
+
+To stop the app, run this:
+
+```
+docker-compose down
 ```
 
 ## Development Mode
@@ -49,5 +55,5 @@ docker compose logs -f app
 In Development Mode, the app is run in a container with the source directory mounted inside. It is reloaded any time you change a source file.
 
 ```
-docker compose up --build dev
+docker-compose up --build dev
 ```
