@@ -35,7 +35,7 @@ MYQ_MAX_OPEN_DURATION_MINUTES=10
 The app runs in a Docker container. It is set to restart if it crashes or when Docker starts up. Run this command to start it:
 
 ```
-docker compose up --daemon --build app
+docker compose up -d --build app
 ```
 
 ## Development Mode
