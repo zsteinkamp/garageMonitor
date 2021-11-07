@@ -1,19 +1,16 @@
 version: "3.3"
 services:
   dev:
-    build: .
-    command: "npm run watch:dev"
+    build:
+      context: ./
+      target: dev
     environment:
       TERM: xterm
     volumes:
       - .:/app
       - /app/node_modules
   app:
-    build: .
-    command: "npm run start"
-    environment:
-      TERM: xterm
+    build:
+      context: ./
+      target: app
     restart: always
-    volumes:
-      - .:/app
-      - /app/node_modules
