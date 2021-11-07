@@ -19,7 +19,7 @@ module.exports = class garageMonitor {
     this.refreshState();
 
     // interval run
-    setInterval(this.refreshState,
+    setInterval(this.refreshState.bind(this),
       (process.env.MYQ_POLLING_INTERVAL_MINUTES || 1) * 60 * 1000);
   }
 
