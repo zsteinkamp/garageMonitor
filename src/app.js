@@ -3,15 +3,6 @@
 // populate environment
 require('dotenv').config();
 
-// set up Twilio
-const accountSid = process.env.TWILIO_ACC_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const twilio = require('twilio')(accountSid, authToken);
-
-// set up myQ
-const MQ = require('@hjdhjd/myq').myQApi;
-const myQ = new MQ(process.env.MYQ_USER, process.env.MYQ_PASS);
-
 // ensure we have env vars we need
 for (const reqEnv of [
   'TWILIO_ACC_SID',
@@ -26,6 +17,15 @@ for (const reqEnv of [
     process.exit(1);
   }
 }
+
+// set up Twilio
+const accountSid = process.env.TWILIO_ACC_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const twilio = require('twilio')(accountSid, authToken);
+
+// set up myQ
+const MQ = require('@hjdhjd/myq').myQApi;
+const myQ = new MQ(process.env.MYQ_USER, process.env.MYQ_PASS);
 
 // helper function to dispatch a message
 const sendMessage = (body) => {
