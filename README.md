@@ -38,6 +38,12 @@ The app runs in a Docker container. It is set to restart if it crashes or when D
 docker compose up -d --build app
 ```
 
+You can keep an eye on the logs from the app container with tihs command:
+
+```
+docker compose logs -f app
+```
+
 ## Development Mode
 
 In Development Mode, the app is run in a container with the source directory mounted inside. It is reloaded any time you change a source file.
