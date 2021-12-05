@@ -9,18 +9,23 @@ module.exports = class garageMonitor {
     this.myQ = this.getMyQClient();
     this.twilio = this.getTwilioClient();
     this.openDoors = {};
+    this.pollingIntervalMinutes = process.env.MYQ_POLLING_INTERVAL_MINUTES || 1;
+    this.notifyIntervalMinutes = process.env.MYQ_NOTIFY_INTERVAL_MINUTES || 10;
   }
 
   startUp() {
     // hello to you too
-    this.sendMessage('Starting up.');
+    this.sendMessage(['Starting up.',
+      'POLLING_INTERVAL=' + this.pollingIntervalMinutes,
+      'NOTIFY_INTERVAL=' + this.notifyIntervalMinutes
+    ].join(' '));
 
     // initial run
     this.refreshState();
 
     // interval run
     setInterval(this.refreshState.bind(this),
-      (process.env.MYQ_POLLING_INTERVAL_MINUTES || 1) * 60 * 1000);
+      (this.pollingIntervalMinutes) * 60 * 1000); // convert minutes to ms
   }
 
   populateEnvironment() {
@@ -80,15 +85,14 @@ module.exports = class garageMonitor {
           }
 
           const openAgeMinutes = Math.round(((new Date()) - this.openDoors[device.serial_number].openAt) / 60 / 1000);
-          console.info('Garage door ', device.serial_number, ' has been open for ', openAgeMinutes, ' minutes.');
 
-          if (openAgeMinutes && (openAgeMinutes % (process.env.MYQ_MAX_OPEN_DURATION_MINUTES || 10) === 0)) {
+          if (openAgeMinutes && (openAgeMinutes % this.notifyIntervalMinutes === 0)) {
             this.sendMessage(`Garage door has been open for ${openAgeMinutes} minutes.`);
           }
         } else {
           if (this.openDoors[device.serial_number]) {
             // now closed, so delete from the state object
-            console.info('Garage door ', device.serial_number, ' is now closed.');
+            this.sendMessage('Garage door ', device.serial_number, ' is now closed.');
             delete this.openDoors[device.serial_number];
           }
         }

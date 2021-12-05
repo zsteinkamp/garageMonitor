@@ -27,7 +27,7 @@ MYQ_POLLING_INTERVAL_MINUTES=2
 To control how long the garage needs to be open before you are notified, set the following environment variable. The default is 10 minutes.
 
 ```
-MYQ_MAX_OPEN_DURATION_MINUTES=10
+MYQ_NOTIFY_INTERVAL_MINUTES=10
 ```
 
 ## Running the App
