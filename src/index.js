@@ -92,7 +92,7 @@ module.exports = class garageMonitor {
         } else {
           if (this.openDoors[device.serial_number]) {
             // now closed, so delete from the state object
-            this.sendMessage('Garage door ', device.serial_number, ' is now closed.');
+            this.sendMessage(`Garage door is now closed.`);
             delete this.openDoors[device.serial_number];
           }
         }
