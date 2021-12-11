@@ -9,6 +9,7 @@ module.exports = class garageMonitor {
     this.myQ = this.getMyQClient();
     this.twilio = this.getTwilioClient();
     this.openDoors = {};
+    this.sendSms = process.env.SEND_SMS === 'true';
     this.pollingIntervalMinutes = process.env.MYQ_POLLING_INTERVAL_MINUTES || 1;
     this.notifyIntervalMinutes = process.env.MYQ_NOTIFY_INTERVAL_MINUTES || 10;
   }
@@ -41,7 +42,7 @@ module.exports = class garageMonitor {
       'MYQ_PASS'
     ]) {
       if (!process.env[reqEnv]) {
-        console.log(`ERROR: Env var ${reqEnv} is not defined.`);
+        console.error(`Env var ${reqEnv} is not defined.`);
         process.exit(1);
       }
     }
@@ -58,14 +59,18 @@ module.exports = class garageMonitor {
   }
 
   sendMessage(body) {
-    this.twilio.messages
-      .create({
-        body: body,
-        messagingServiceSid: process.env.TWILIO_MSG_SVC_SID,
-        to: process.env.TWILIO_TO
-      })
-      .then(message => console.log(`Sent SMS <${message.sid}> :: ${body}`))
-      .done();
+    if (this.sendSms) {
+      this.twilio.messages
+        .create({
+          body: body,
+          messagingServiceSid: process.env.TWILIO_MSG_SVC_SID,
+          to: process.env.TWILIO_TO
+        })
+        .then(message => console.info(`Sent SMS <${message.sid}> :: ${body}`))
+        .done();
+    } else {
+      console.info(`Would have sent SMS :: ${body}`);
+    }
   }
 
   refreshState() {
@@ -92,7 +97,7 @@ module.exports = class garageMonitor {
         } else {
           if (this.openDoors[device.serial_number]) {
             // now closed, so delete from the state object
-            this.sendMessage(`Garage door is now closed.`);
+            this.sendMessage('Garage door is now closed.');
             delete this.openDoors[device.serial_number];
           }
         }

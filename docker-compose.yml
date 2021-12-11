@@ -6,7 +6,9 @@ services:
       target: dev
     environment:
       TERM: xterm
-      HOST: "{{.Node.Hostname}}"
+      SEND_SMS: "false"
+    ports:
+      - "8080:8080"
     volumes:
       - .:/app
       - /app/node_modules
@@ -14,4 +16,6 @@ services:
     build:
       context: ./
       target: app
+    environment:
+      SEND_SMS: "true"
     restart: always
