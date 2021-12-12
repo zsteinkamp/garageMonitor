@@ -7,7 +7,8 @@ services:
     environment:
       TERM: xterm
       SEND_SMS: "false"
-    network_mode: host
+    ports:
+      - 8080:8080
     volumes:
       - .:/app
       - /app/node_modules
@@ -17,5 +18,6 @@ services:
       target: app
     environment:
       SEND_SMS: "true"
-    network_mode: host
+    ports:
+      - 8080:8080
     restart: always

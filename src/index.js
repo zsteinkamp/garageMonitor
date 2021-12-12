@@ -13,6 +13,9 @@ module.exports = class garageMonitor {
     this.sendSms = process.env.SEND_SMS === 'true';
     this.pollingIntervalMinutes = process.env.MYQ_POLLING_INTERVAL_MINUTES || 1;
     this.notifyIntervalMinutes = process.env.MYQ_NOTIFY_INTERVAL_MINUTES || 10;
+    this.expressPort = process.env.HTTP_LISTEN_PORT || 8080;
+
+    this.urlBase = process.env.URL_BASE || `http://${process.env.HOSTNAME}.local:${this.expressPort}`;
     this.app = express();
     this.app.get('/doors', (req, res) => {
       res.json(this.doors);
@@ -20,17 +23,20 @@ module.exports = class garageMonitor {
     this.app.get('/doors/:id/ack', (req, res) => {
       if (this.doors[req.params.id]) {
         this.doors[req.params.id].ackedAt = new Date();
+        console.info(`Received ack for door ${req.params.id}.`);
       }
-      res.json(this.doors);
+      res.set('Content-Type', 'text/plain');
+      res.send(`OK\n${JSON.stringify(this.doors, null, 2)}`);
     });
-    this.app.listen(8080, () => { this.startUp(); });
+    this.app.listen(this.expressPort, () => { this.startUp(); });
   }
 
   startUp() {
     console.log(process.env.HOSTNAME);
     this.sendMessage(['Starting up.',
       'POLLING_INTERVAL=' + this.pollingIntervalMinutes,
-      'NOTIFY_INTERVAL=' + this.notifyIntervalMinutes
+      'NOTIFY_INTERVAL=' + this.notifyIntervalMinutes,
+      'URL_BASE=' + this.urlBase
     ].join(' '));
 
     // initial run
@@ -108,23 +114,26 @@ module.exports = class garageMonitor {
         if (doorState !== 'closed') {
           if (!door.openAt) {
             // not already known as open
-            console.info('Garage door ', device.serial_number, ' is now open.');
+            console.info(`Garage door ${device.serial_number} is now open.`);
             door.openAt = new Date();
           }
 
           const openAgeMinutes = Math.round(((new Date()) - door.openAt) / 60 / 1000);
 
           if (openAgeMinutes && (openAgeMinutes % this.notifyIntervalMinutes === 0) && // open too long AND
-            (!door.ackedAt || door.ackedAt > door.openAt) // not acked
+            (!door.ackedAt || door.ackedAt < door.openAt) // not acked
           ) {
-            this.sendMessage(`Garage door ${device.serial_number} has been open for ${openAgeMinutes} minutes.`);
+            this.sendMessage(`Garage door ${device.serial_number} has been open for ${openAgeMinutes} minutes. ACK: ${this.urlBase}/doors/${device.serial_number}/ack`);
+            door.notifiedAt = new Date();
           }
         } else {
           // door is closed
-          if (door.openAt) {
-            // was open, now closed, so delete openAt from the state object
+          if (door.openAt && door.notifiedAt) {
+            // was open long enough to notify, now closed, so delete openAt from the state object
             this.sendMessage(`Garage door ${device.serial_number} is now closed.`);
             delete door.openAt;
+            delete door.ackedAt;
+            delete door.notifiedAt;
           }
         }
       }

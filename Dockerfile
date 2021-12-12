@@ -1,6 +1,8 @@
 FROM node:16 as dev
 
 WORKDIR /app
+RUN chown node: /app
+USER node
 COPY package*.json ./
 RUN npm ci
 
