@@ -6,6 +6,7 @@ RUN npm ci
 
 CMD [ "npm", "run", "watch:dev" ]
 
+EXPOSE 8080
 
 FROM dev as app
 

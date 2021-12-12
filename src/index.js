@@ -2,20 +2,32 @@
 
 const MQ = require('@hjdhjd/myq').myQApi;
 const Twilio = require('twilio');
+const express = require('express');
 
 module.exports = class garageMonitor {
   constructor() {
     this.populateEnvironment();
     this.myQ = this.getMyQClient();
     this.twilio = this.getTwilioClient();
-    this.openDoors = {};
+    this.doors = {};
     this.sendSms = process.env.SEND_SMS === 'true';
     this.pollingIntervalMinutes = process.env.MYQ_POLLING_INTERVAL_MINUTES || 1;
     this.notifyIntervalMinutes = process.env.MYQ_NOTIFY_INTERVAL_MINUTES || 10;
+    this.app = express();
+    this.app.get('/doors', (req, res) => {
+      res.json(this.doors);
+    });
+    this.app.get('/doors/:id/ack', (req, res) => {
+      if (this.doors[req.params.id]) {
+        this.doors[req.params.id].ackedAt = new Date();
+      }
+      res.json(this.doors);
+    });
+    this.app.listen(8080, () => { this.startUp(); });
   }
 
   startUp() {
-    // hello to you too
+    console.log(process.env.HOSTNAME);
     this.sendMessage(['Starting up.',
       'POLLING_INTERVAL=' + this.pollingIntervalMinutes,
       'NOTIFY_INTERVAL=' + this.notifyIntervalMinutes
@@ -69,11 +81,12 @@ module.exports = class garageMonitor {
         .then(message => console.info(`Sent SMS <${message.sid}> :: ${body}`))
         .done();
     } else {
-      console.info(`Would have sent SMS :: ${body}`);
+      console.info(`Would have sent SMS :: ${body}`, this.doors);
     }
   }
 
   refreshState() {
+    console.info('Refreshing state');
     this.myQ.refreshDevices().then(() => {
       for (const device of this.myQ.devices) {
         // console.debug(device);
@@ -82,23 +95,36 @@ module.exports = class garageMonitor {
           console.warn('WEIRD: garagedoor does not have state. Device:', device);
           continue;
         }
-        if (device.state.door_state !== 'closed') {
-          if (!this.openDoors[device.serial_number]) {
+        // init door obj
+        if (!this.doors[device.serial_number]) {
+          this.doors[device.serial_number] = {};
+        }
+        const door = this.doors[device.serial_number];
+
+        // door state
+        const doorState = device.state.door_state;
+        door.state = doorState;
+
+        if (doorState !== 'closed') {
+          if (!door.openAt) {
             // not already known as open
             console.info('Garage door ', device.serial_number, ' is now open.');
-            this.openDoors[device.serial_number] = { openAt: new Date() };
+            door.openAt = new Date();
           }
 
-          const openAgeMinutes = Math.round(((new Date()) - this.openDoors[device.serial_number].openAt) / 60 / 1000);
+          const openAgeMinutes = Math.round(((new Date()) - door.openAt) / 60 / 1000);
 
-          if (openAgeMinutes && (openAgeMinutes % this.notifyIntervalMinutes === 0)) {
-            this.sendMessage(`Garage door has been open for ${openAgeMinutes} minutes.`);
+          if (openAgeMinutes && (openAgeMinutes % this.notifyIntervalMinutes === 0) && // open too long AND
+            (!door.ackedAt || door.ackedAt > door.openAt) // not acked
+          ) {
+            this.sendMessage(`Garage door ${device.serial_number} has been open for ${openAgeMinutes} minutes.`);
           }
         } else {
-          if (this.openDoors[device.serial_number]) {
-            // now closed, so delete from the state object
-            this.sendMessage('Garage door is now closed.');
-            delete this.openDoors[device.serial_number];
+          // door is closed
+          if (door.openAt) {
+            // was open, now closed, so delete openAt from the state object
+            this.sendMessage(`Garage door ${device.serial_number} is now closed.`);
+            delete door.openAt;
           }
         }
       }
