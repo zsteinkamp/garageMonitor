@@ -28,11 +28,13 @@ module.exports = class garageMonitor {
       res.set('Content-Type', 'text/plain');
       res.send(`OK\n${JSON.stringify(this.doors, null, 2)}`);
     });
-    this.app.listen(this.expressPort, () => { this.startUp(); });
   }
 
   startUp() {
-    console.log(process.env.HOSTNAME);
+    this.app.listen(this.expressPort, () => { this.startPoller(); });
+  }
+
+  startPoller() {
     this.sendMessage(['Starting up.',
       'POLLING_INTERVAL=' + this.pollingIntervalMinutes,
       'NOTIFY_INTERVAL=' + this.notifyIntervalMinutes,
@@ -94,6 +96,10 @@ module.exports = class garageMonitor {
   refreshState() {
     console.info('Refreshing state');
     this.myQ.refreshDevices().then(() => {
+      if (!this.myQ.devices) {
+        console.warn('No devices found.');
+        return;
+      }
       for (const device of this.myQ.devices) {
         // console.debug(device);
         if (device.device_family !== 'garagedoor') { continue; }
