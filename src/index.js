@@ -135,8 +135,11 @@ module.exports = class garageMonitor {
         } else {
           // door is closed
           if (door.openAt) {
-            // was open, now closed, so delete times from the state object
-            this.sendMessage(`Garage door ${device.serial_number} is now closed.`);
+            if (door.notifiedAt) {
+              // notify if an open notif was sent
+              this.sendMessage(`Garage door ${device.serial_number} is now closed.`);
+            }
+            // delete times from the state object
             delete door.openAt;
             delete door.ackedAt;
             delete door.notifiedAt;
