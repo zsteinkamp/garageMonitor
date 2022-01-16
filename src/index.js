@@ -15,7 +15,7 @@ module.exports = class garageMonitor {
     this.notifyIntervalMinutes = process.env.MYQ_NOTIFY_INTERVAL_MINUTES || 10;
     this.expressPort = process.env.HTTP_LISTEN_PORT || 8080;
 
-    this.urlBase = process.env.URL_BASE || `http://${process.env.HOSTNAME}.local:${this.expressPort}`;
+    this.urlBase = new URL(process.env.URL_BASE || `http://${process.env.HOSTNAME}.local:${this.expressPort}`);
     this.app = express();
     this.app.get('/doors', (req, res) => {
       res.json(this.doors);
@@ -38,7 +38,7 @@ module.exports = class garageMonitor {
     this.sendMessage(['Starting up.',
       'POLLING_INTERVAL=' + this.pollingIntervalMinutes,
       'NOTIFY_INTERVAL=' + this.notifyIntervalMinutes,
-      'URL_BASE=' + this.urlBase
+      'URL_BASE=' + this.urlBase.href
     ].join(' '));
 
     // initial run
@@ -129,7 +129,9 @@ module.exports = class garageMonitor {
           if (openAgeMinutes && (openAgeMinutes % this.notifyIntervalMinutes === 0) && // open too long AND
             (!door.ackedAt || door.ackedAt < door.openAt) // not acked
           ) {
-            this.sendMessage(`Garage door ${device.serial_number} has been open for ${openAgeMinutes} minutes. ACK: ${this.urlBase}/doors/${device.serial_number}/ack`);
+            const ackUrl = new URL(this.urlBase.href);
+            ackUrl.pathname = `/doors/${device.serial_number}/ack`;
+            this.sendMessage(`Garage door ${device.serial_number} has been open for ${openAgeMinutes} minutes. ACK: ${ackUrl.href}`);
             door.notifiedAt = new Date();
           }
         } else {
